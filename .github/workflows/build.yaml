@@ -58,7 +58,17 @@ jobs:
           mkdir cmake-build-frontend-sdl2
           cmake -G Ninja -S frontend-sdl2 -B cmake-build-frontend-sdl2 -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install-libprojectm;${GITHUB_WORKSPACE}/install-poco" "-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install-frontend-sdl2"
           cmake --build cmake-build-frontend-sdl2 --parallel
-  #          cmake --install "${{ github.workspace }}/cmake-build-frontend-sdl2"
+
+      - name: Package projectMSDL
+        run: |
+          cd cmake-build-frontend-sdl2
+          cpack -G DEB
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: projectMSDL-buildcheck
+          path: cmake-build-frontend-sdl2/*.deb
 
   build-windows:
     name: Windows, x64

@@ -19,6 +19,7 @@ add_executable(projectMSDL WIN32
         SDLRenderingWindow.cpp
         SDLRenderingWindow.h
         main.cpp
+        projectMSDL.rc
         )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
