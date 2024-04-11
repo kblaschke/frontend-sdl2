@@ -1,0 +1,3 @@
+Welcome to the projectM Music Visualizer installer!
+
+This package will install the projectM Music Visualizer on your Mac.

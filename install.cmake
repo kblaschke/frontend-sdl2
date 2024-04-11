@@ -1,5 +1,7 @@
 install(TARGETS projectMSDL
+        RUNTIME_DEPENDENCY_SET projectMSDLDepends
         RUNTIME DESTINATION ${PROJECTMSDL_BIN_DIR}
+        BUNDLE DESTINATION . # .app bundle will reside at the top-level of the install prefix
         COMPONENT projectMSDL
         )
 
@@ -7,6 +9,21 @@ install(FILES ${PROJECTM_CONFIGURATION_FILE}
         DESTINATION ${PROJECTMSDL_DATA_DIR}
         COMPONENT projectMSDL
         )
+
+if(ENABLE_INSTALL_BDEPS)
+    install(RUNTIME_DEPENDENCY_SET projectMSDLDepends
+
+            # Important: Due to CMake bug #24606 this needs to stay at the top of the argument list!
+            # Exclude OS libraries on Linux/macOS
+            POST_EXCLUDE_REGEXES
+            "^/lib(32|64)?/+"
+            "^/usr/lib(32|64)?/+"
+            "^/Library/+"
+
+            RUNTIME DESTINATION ${PROJECTMSDL_LIB_DIR}
+            FRAMEWORK DESTINATION ${PROJECTMSDL_DATA_DIR}
+            )
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ENABLE_FLAT_PACKAGE)
     if(ENABLE_DESKTOP_ICON)
@@ -27,15 +44,30 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ENABLE_FLAT_PACKAGE)
             install_icon(${size})
         endforeach()
 
-    endif()
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT ENABLE_FLAT_PACKAGE)
-    set(ICNS_FILE ${CMAKE_BINARY_DIR}/projectMSDL.icns)
-    execute_process(COMMAND iconutil -c icns -o "${ICNS_FILE}" "${CMAKE_SOURCE_DIR}/src/resources/icons")
+        install(FILES src/resources/icons/icon_scalable.svg
+                DESTINATION ${PROJECTMSDL_ICONS_DIR}/scalable/apps
+                RENAME projectMSDL.svg
+                COMPONENT projectMSDL
+                )
 
-    install(FILES ${ICNS_FILE}
+    endif()
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT ENABLE_FLAT_PACKAGE)
+    install(FILES src/resources/icons/icon.icns
+            DESTINATION ${PROJECTMSDL_DATA_DIR}
+            RENAME projectMSDL.icns
+            COMPONENT projectMSDL
+            )
+    install(FILES src/resources/gpl-3.0.txt
             DESTINATION ${PROJECTMSDL_DATA_DIR}
             COMPONENT projectMSDL
             )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        install(IMPORTED_RUNTIME_ARTIFACTS projectMSDL
+                LIBRARY DESTINATION ${PROJECTMSDL_BIN_DIR}
+                RUNTIME DESTINATION ${PROJECTMSDL_BIN_DIR}
+                COMPONENT projectMSDL
+                )
 endif()
 
 # Install optional presets
@@ -44,6 +76,7 @@ foreach(preset_dir ${PRESET_DIRS})
             DESTINATION "${PROJECTMSDL_PRESETS_DIR}"
             COMPONENT projectMSDL
             PATTERN *.md EXCLUDE
+            REGEX "(^|/)[.][^.]*" EXCLUDE
             )
 endforeach()
 
@@ -53,5 +86,6 @@ foreach(texture_dir ${TEXTURE_DIRS})
             DESTINATION "${PROJECTMSDL_TEXTURES_DIR}"
             COMPONENT projectMSDL
             PATTERN *.md EXCLUDE
+            REGEX "(^|/)[.][^.]*" EXCLUDE
             )
 endforeach()
