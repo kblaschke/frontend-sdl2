@@ -83,9 +83,9 @@ projectM.fps = 60
 
 # Per-pixel mesh size. This is the grid in which "per-pixel" code is executed, once per cell.
 # Do not set this value too high, as it severely impacts performance. On low-end hardware, set this to a small
-# value, e.g. 64x32. This does *NOT* affect the actual render/shader resolution!
-projectM.meshX = 200
-projectM.meshY = 125
+# value, e.g. 48x32. This does *NOT* affect the actual render/shader resolution!
+projectM.meshX = 96
+projectM.meshY = 54
 
 # Transition time in seconds for soft cuts
 projectM.transitionDuration = 3
