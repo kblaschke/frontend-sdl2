@@ -1,0 +1,26 @@
+name: 'Repo Lockdown'
+
+on:
+  issues:
+    types: opened
+  pull_request_target:
+    types: opened
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dessant/repo-lockdown@v4
+        with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          issue-comment: >
+            This repository does not accept bug reports. Please report any issues in the
+            [main projectM repository](https://github.com/projectM-visualizer/projectm/issues/new/choose).
+          pr-comment: >
+            This repository _does not accept_ pull requests, it is just a personal working fork. Please open
+            all pull requests in the upstream repository
+            [projectM-visualizer/frontend-sdl2](https://github.com/projectM-visualizer/frontend-sdl2/pulls)!
