@@ -91,11 +91,11 @@ public:
      */
     static std::string UnicodeToString(LPCWSTR unicodeString);
 
-    HRESULT QueryInterface(const IID& riid, void** ppvObject) override;
+    HRESULT STDMETHODCALLTYPE QueryInterface(const IID& riid, void** ppvObject) override;
 
-    ULONG AddRef() override;
+    ULONG STDMETHODCALLTYPE AddRef() override;
 
-    ULONG Release() override;
+    ULONG STDMETHODCALLTYPE Release() override;
 
 protected:
     /**
@@ -225,7 +225,7 @@ protected:
      * @param dwNewState The new state.
      * @return Always S_OK.
      */
-    HRESULT OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) override;
+    HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) override;
 
     /**
      * @brief Event which is called whenever the default device changed.
@@ -243,7 +243,7 @@ protected:
      * @param pwstrDefaultDeviceId
      * @return
      */
-    HRESULT OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDefaultDeviceId) override;
+    HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDefaultDeviceId) override;
 
     /**
      * @brief Event which is called if a new device was added.
@@ -254,7 +254,7 @@ protected:
      * @param pwstrDeviceId The opaque device ID for the new device.
      * @return Always S_OK.
      */
-    HRESULT OnDeviceAdded(LPCWSTR pwstrDeviceId) override;
+    HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) override;
 
     /**
      * @brief Event which is called if a device was fully removed.
@@ -266,7 +266,7 @@ protected:
      * @param pwstrDeviceId The opaque device ID for the removed device.
      * @return Always S_OK.
      */
-    HRESULT OnDeviceRemoved(LPCWSTR pwstrDeviceId) override;
+    HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId) override;
 
     /**
      * @brief Event which is called if a device property changed.
@@ -276,7 +276,7 @@ protected:
      * @param key The property key that has changed.
      * @return Always S_OK.
      */
-    HRESULT OnPropertyValueChanged(LPCWSTR pwstrDeviceId, PROPERTYKEY key) override;
+    HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, PROPERTYKEY key) override;
 
     Poco::Logger& _logger{Poco::Logger::get("AudioCapture.WASAPI")}; //!< The class logger.
 
