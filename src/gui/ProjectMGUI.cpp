@@ -43,7 +43,7 @@ void ProjectMGUI::initialize(Poco::Util::Application& app)
     _glContext = renderingWindow.GetGlContext();
 
     ImGui_ImplSDL2_InitForOpenGL(_renderingWindow, _glContext);
-    ImGui_ImplOpenGL3_Init("#version 130");
+    ImGui_ImplOpenGL3_Init("#version 150");
 
     UpdateFontSize();
 
