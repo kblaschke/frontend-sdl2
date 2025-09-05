@@ -15,6 +15,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(ENABLE_FLAT_PACKAGE "Creates a \"flat\" install layout with the executable, configuration file(s) and preset/texture dirs directly in the install prefix." OFF)
 option(ENABLE_INSTALL_BDEPS "Installs all shared libraries projectMSDL requires to run. On some platforms, CMake 3.31 or higher is required for this to work!" OFF)
+
+set(PROJECTMSDL_PROPERTIES_FILENAME "projectMSDL.properties")
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ENABLE_FLAT_PACKAGE)
     include(GNUInstallDirs)
 
@@ -23,7 +26,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ENABLE_FLAT_PACKAGE)
     set(PROJECTMSDL_DATA_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}" CACHE STRING "Directory to install the config file, presets and texture, relative to the install prefix.")
     set(PROJECTMSDL_PRESETS_DIR "${PROJECTMSDL_DATA_DIR}/presets" CACHE STRING "Directory to install optional preset files, relative to the install prefix.")
     set(PROJECTMSDL_TEXTURES_DIR "${PROJECTMSDL_DATA_DIR}/textures" CACHE STRING "Directory to install optional texture files, relative to the install prefix.")
-
 
     # Additional options for desktop integration
     option(ENABLE_DESKTOP_ICON "Install a .desktop file and icons" ON)
@@ -47,7 +49,11 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT ENABLE_FLAT_PACKAGE)
 
     set(DEFAULT_CONFIG_PATH "\${application.dir}/../Resources" CACHE STRING "Optional path to look for the configuration file in addition to PROJECTMSDL_BIN_DIR.")
     set(DEFAULT_PRESETS_PATH "\${application.dir}/../Resources/Presets" CACHE STRING "Default presets path in the configuration file.")
-    set(DEFAULT_TEXTURES_PATH "\${application.dir}/../Resources/Presets" CACHE STRING "Default textures path in the configuration file.")
+    set(DEFAULT_TEXTURES_PATH "\${application.dir}/../Resources/Textures" CACHE STRING "Default textures path in the configuration file.")
+
+    set(PROJECTMSDL_PROPERTIES_FILENAME "projectM.properties")
+
+    set(CMAKE_INSTALL_RPATH "@loader_path/../PlugIns")
 else()
     set(DEFAULT_PACKAGING_CONFIG "packaging-windows.cmake")
 
@@ -61,6 +67,7 @@ else()
     set(DEFAULT_CONFIG_PATH "" CACHE STRING "Optional path to look for the configuration file in addition to PROJECTMSDL_BIN_DIR.")
     set(DEFAULT_PRESETS_PATH "\${application.dir}/presets" CACHE STRING "Default presets path in the configuration file.")
     set(DEFAULT_TEXTURES_PATH "\${application.dir}/textures" CACHE STRING "Default textures path in the configuration file.")
+
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
