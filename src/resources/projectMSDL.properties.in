@@ -25,8 +25,8 @@ window.fullscreen.width = 0
 window.fullscreen.height = 0
 
 # Window size if not in fullscreen
-window.width = 1024
-window.height = 768
+window.width = 1920
+window.height = 1080
 
 # Override system default window position
 window.overridePosition = false
