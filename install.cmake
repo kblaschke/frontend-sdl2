@@ -7,11 +7,13 @@ install(TARGETS projectMSDL
 
 install(FILES ${PROJECTM_CONFIGURATION_FILE}
         DESTINATION ${PROJECTMSDL_DATA_DIR}
+        RENAME ${PROJECTMSDL_PROPERTIES_FILENAME}
         COMPONENT projectMSDL
         )
 
 if(ENABLE_INSTALL_BDEPS)
     install(RUNTIME_DEPENDENCY_SET projectMSDLDepends
+            COMPONENT projectMSDL
 
             # Important: Due to CMake bug #24606 this needs to stay at the top of the argument list!
             # Exclude OS libraries on Linux/macOS
@@ -20,6 +22,7 @@ if(ENABLE_INSTALL_BDEPS)
             "^/usr/lib(32|64)?/+"
             "^/Library/+"
 
+            LIBRARY DESTINATION ${PROJECTMSDL_LIB_DIR}
             RUNTIME DESTINATION ${PROJECTMSDL_LIB_DIR}
             FRAMEWORK DESTINATION ${PROJECTMSDL_DATA_DIR}
             )

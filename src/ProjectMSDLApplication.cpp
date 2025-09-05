@@ -72,6 +72,7 @@ void ProjectMSDLApplication::initialize(Poco::Util::Application& self)
             {
                 Poco::Path configFilePath(configPath);
                 configFilePath.makeDirectory().setFileName(configFileName);
+                poco_information_f1(logger(), "Trying to load configuration from %s.", configFilePath.toString());
                 if (Poco::File(configFilePath).exists())
                 {
                     loadConfiguration(configFilePath.toString(), PRIO_DEFAULT);
