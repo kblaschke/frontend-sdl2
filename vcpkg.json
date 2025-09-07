@@ -4,6 +4,8 @@
     "glew",
     "sdl2",
     "poco",
-    "freetype"
+    "freetype",
+    "projectm",
+    "projectm-eval"
   ]
 }
