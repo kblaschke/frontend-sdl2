@@ -96,6 +96,7 @@ if(NOT SDL2_LINKAGE STREQUAL "shared" AND NOT SDL2_LINKAGE STREQUAL "static")
 endif()
 
 find_package(projectM4 REQUIRED COMPONENTS Playlist)
+find_package(projectM-Eval REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(Poco REQUIRED COMPONENTS JSON XML Util Foundation)
 
