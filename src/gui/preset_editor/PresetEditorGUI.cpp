@@ -1,8 +1,8 @@
 #include "PresetEditorGUI.h"
 
 #include "CodeContextInformation.h"
+#include "CodeEditorWindow.h"
 #include "IconsFontAwesome7.h"
-#include "ProjectMGUI.h"
 
 #include "ProjectMSDLApplication.h"
 #include "ProjectMWrapper.h"
@@ -22,6 +22,10 @@ PresetEditorGUI::PresetEditorGUI(ProjectMGUI& gui)
     , _application(ProjectMSDLApplication::instance())
     , _projectMWrapper(Poco::Util::Application::instance().getSubsystem<ProjectMWrapper>())
     , _menu(*this)
+{
+}
+
+PresetEditorGUI::~PresetEditorGUI()
 {
 }
 
@@ -53,6 +57,7 @@ void PresetEditorGUI::Show(const std::string& presetFile)
     }
 
     _editorPreset.FromParsedFile(_presetFile);
+    _codeEditorWindow = std::make_unique<CodeEditorWindow>();
 
     _visible = true;
 }
@@ -84,7 +89,7 @@ bool PresetEditorGUI::Draw()
 
         ImGui::SameLine();
 
-        _codeEditorWindow.Draw();
+        _codeEditorWindow->Draw();
     }
     ImGui::End();
 
@@ -98,6 +103,8 @@ bool PresetEditorGUI::Draw()
 
         _visible = false;
         _wantClose = false;
+
+        _codeEditorWindow.reset();
     }
 
     return true;
@@ -162,7 +169,7 @@ void PresetEditorGUI::ReleaseProjectMControl()
 
 void PresetEditorGUI::EditCode(ExpressionCodeTypes type, std::string& code, int index)
 {
-    _codeEditorWindow.OpenCodeInTab(type, code, index);
+    _codeEditorWindow->OpenCodeInTab(type, code, index);
 }
 
 unsigned long PresetEditorGUI::GetLoC(const std::string& code)
