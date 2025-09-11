@@ -966,7 +966,7 @@ void TextEditor::HandleMouseInputs()
 
     if (ImGui::IsWindowHovered())
     {
-        if (!shift && !alt)
+        if (!alt)
         {
             auto click = ImGui::IsMouseClicked(0);
             auto doubleClick = ImGui::IsMouseDoubleClicked(0);
@@ -1013,7 +1013,13 @@ void TextEditor::HandleMouseInputs()
 			*/
             else if (click)
             {
-                mState.mCursorPosition = mInteractiveStart = mInteractiveEnd = ScreenPosToCoordinates(ImGui::GetMousePos());
+                if (shift)
+                {
+                    mInteractiveStart = mState.mSelectionStart;
+                    mState.mCursorPosition = mInteractiveEnd = ScreenPosToCoordinates(ImGui::GetMousePos());
+                }
+                else
+                    mState.mCursorPosition = mInteractiveStart = mInteractiveEnd = ScreenPosToCoordinates(ImGui::GetMousePos());
                 if (ctrl)
                     mSelectionMode = SelectionMode::Word;
                 else
