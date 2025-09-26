@@ -242,6 +242,37 @@ bool AudioCaptureImpl::OpenAudioDevice(IMMDevice* device, bool useLoopback)
         return false;
     }
 
+    // Check if the returned format is actually supported by the device, which might not be the case.
+    WAVEFORMATEX* pwfxClosest{};
+    result = _audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED,
+                                             pwfx,
+                                             &pwfxClosest);
+
+    if (result == AUDCLNT_E_UNSUPPORTED_FORMAT)
+    {
+        poco_error_f1(_logger, "IAudioClient::IsFormatSupported returned AUDCLNT_E_UNSUPPORTED_FORMAT for sample format: 0x%04?x", pwfx->wFormatTag);
+        CoTaskMemFree(pwfx);
+        CoTaskMemFree(pwfxClosest);
+        return false;
+    }
+    if (result != S_FALSE && result != S_OK)
+    {
+        poco_error_f1(_logger, "IAudioClient::IsFormatSupported failed: 0x%04?x", result);
+        CoTaskMemFree(pwfx);
+        CoTaskMemFree(pwfxClosest);
+        return false;
+    }
+    if (result == S_FALSE)
+    {
+        poco_debug_f2(_logger, "IAudioClient::IsFormatSupported returned a closest match for sample format 0x%04?x: 0x%04?x", pwfx->wFormatTag, pwfxClosest->wFormatTag);
+        CoTaskMemFree(pwfx);
+        pwfx = pwfxClosest;
+    }
+    else
+    {
+        poco_debug_f1(_logger, "IAudioClient::IsFormatSupported returned S_OK for sample format: 0x%04?x", pwfx->wFormatTag);
+    }
+
     // Should default to float32 data, but some devices might deliver other formats.
     if (pwfx->wFormatTag != WAVE_FORMAT_IEEE_FLOAT)
     {
@@ -252,7 +283,7 @@ bool AudioCaptureImpl::OpenAudioDevice(IMMDevice* device, bool useLoopback)
             CoTaskMemFree(pwfx);
             return false;
         }
-        else if (!IsEqualGUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, extensibleFormat->SubFormat))
+        if (!IsEqualGUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, extensibleFormat->SubFormat))
         {
             poco_error_f1(_logger, "IAudioClient::GetMixFormat returned non-float extensible sub format: 0x%04?x", extensibleFormat->SubFormat);
             CoTaskMemFree(pwfx);
