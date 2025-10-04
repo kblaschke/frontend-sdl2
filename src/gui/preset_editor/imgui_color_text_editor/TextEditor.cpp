@@ -3192,14 +3192,6 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::MilkdropEx
         for (auto& k : nseel2Keywords)
             milkdropLangDef.mKeywords.insert(k);
 
-        static const char* const identifiers[] = {};
-        for (auto& k : identifiers)
-        {
-            Identifier id;
-            id.mDeclaration = "Internal function";
-            milkdropLangDef.mIdentifiers.insert(std::make_pair(std::string(k), id));
-        }
-
         milkdropLangDef.mTokenize = [](const char* in_begin, const char* in_end, const char*& out_begin, const char*& out_end, PaletteIndex& paletteIndex) -> bool {
             paletteIndex = PaletteIndex::Max;
 
