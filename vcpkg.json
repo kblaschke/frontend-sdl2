@@ -1,9 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "dependencies": [
+    "expat",
     "glew",
     "sdl2",
-    "poco",
+    {
+      "name": "poco",
+      "features": [
+        "util"
+      ]
+    },
     "freetype",
     "projectm",
     "projectm-eval"
