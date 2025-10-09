@@ -34,6 +34,35 @@ void MainMenu::Draw()
         DrawFileMenu();
         DrawPlaybackMenu();
         DrawOptionsMenu();
+
+
+        if (ImGui::BeginMenu("Sprites"))
+        {
+            if (ImGui::MenuItem("Display Sprite"))
+            {
+                _projectMWrapper.AddSprite(R"(
+img=sky
+init_1=blendmode = 4;
+init_2=burn = 1;
+code_1=rot = time*0.27;
+code_2=new_scale = 0.5 + 0.1*sin(time*0.6);
+code_3=sx = new_scale;
+code_4=sy = new_scale;
+code_5=r=0.5+sin(time*0.9);
+code_6=g=0.5+sin(time*1.3);
+code_7=repeatx=1.5+sin(time*1.1);
+code_8=repeaty=1.5+sin(time*0.7);
+)");
+            }
+
+            if (ImGui::MenuItem("Remove Sprites"))
+            {
+                _projectMWrapper.RemoveAllSprites();
+            }
+
+            ImGui::EndMenu();
+        }
+
         DrawHelpMenu();
 
         ImGui::EndMainMenuBar();

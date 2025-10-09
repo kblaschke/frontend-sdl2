@@ -274,6 +274,16 @@ void ProjectMWrapper::PresetFileNameToClipboard() const
     projectm_playlist_free_string(presetName);
 }
 
+void ProjectMWrapper::AddSprite(std::string const& spriteData)
+{
+    projectm_sprite_create(_projectM, "milkdrop", spriteData.c_str());
+}
+
+void ProjectMWrapper::RemoveAllSprites()
+{
+    projectm_sprite_destroy_all(_projectM);
+}
+
 void ProjectMWrapper::PresetSwitchedEvent(bool isHardCut, unsigned int index, void* context)
 {
     auto that = reinterpret_cast<ProjectMWrapper*>(context);

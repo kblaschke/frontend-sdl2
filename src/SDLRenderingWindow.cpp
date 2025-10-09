@@ -29,9 +29,7 @@ void SDLRenderingWindow::initialize(Poco::Util::Application& app)
     {
         CreateSDLWindow();
     }
-    int maxTextureImageUnits;
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureImageUnits);
-    std::cout << "Max texture units: " << maxTextureImageUnits << std::endl;
+
     Poco::NotificationCenter::defaultCenter().addObserver(_updateWindowTitleObserver);
 
     // Observe user configuration changes (set via the settings window)

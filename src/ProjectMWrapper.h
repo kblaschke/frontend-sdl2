@@ -116,6 +116,10 @@ public:
      */
     void PresetFileNameToClipboard() const;
 
+    void AddSprite(std::string const& spriteData);
+
+    void RemoveAllSprites();
+
 private:
     /**
      * @brief projectM callback. Called whenever a preset is switched.
