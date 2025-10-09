@@ -80,6 +80,7 @@ endif()
 
 # Install optional presets
 foreach(preset_dir ${PRESET_DIRS})
+    file(TO_CMAKE_PATH "${preset_dir}" preset_dir)
     install(DIRECTORY ${preset_dir}
             DESTINATION "${PROJECTMSDL_PRESETS_DIR}"
             COMPONENT projectMSDL
@@ -90,6 +91,7 @@ endforeach()
 
 # Install optional textures
 foreach(texture_dir ${TEXTURE_DIRS})
+    file(TO_CMAKE_PATH "${texture_dir}" texture_dir)
     install(DIRECTORY ${texture_dir}
             DESTINATION "${PROJECTMSDL_TEXTURES_DIR}"
             COMPONENT projectMSDL
