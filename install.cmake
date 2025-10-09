@@ -1,6 +1,8 @@
+# Note: each DESTINATION keyword needs its own COMPONENT specification!
 install(TARGETS projectMSDL
         RUNTIME_DEPENDENCY_SET projectMSDLDepends
         RUNTIME DESTINATION ${PROJECTMSDL_BIN_DIR}
+        COMPONENT projectMSDL
         BUNDLE DESTINATION . # .app bundle will reside at the top-level of the install prefix
         COMPONENT projectMSDL
         )
@@ -21,6 +23,9 @@ if(ENABLE_INSTALL_BDEPS)
             "^/lib(32|64)?/+"
             "^/usr/lib(32|64)?/+"
             "^/Library/+"
+            ".*system32/.*\\.dll"
+            PRE_EXCLUDE_REGEXES
+            ".*api-ms-win-crt-.*\\.dll"
 
             LIBRARY DESTINATION ${PROJECTMSDL_LIB_DIR}
             RUNTIME DESTINATION ${PROJECTMSDL_LIB_DIR}

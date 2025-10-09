@@ -3,7 +3,13 @@
   "dependencies": [
     "glew",
     "sdl2",
-    "poco",
+    {
+      "name": "poco",
+      "features": [
+        "util"
+      ]
+    },
+    "projectm",
     "freetype"
   ]
 }
