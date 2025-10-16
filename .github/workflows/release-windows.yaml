@@ -3,7 +3,7 @@
 # including projectM.
 name: Build Release Package for Windows
 
-on: push
+on: workflow_dispatch
 
 jobs:
   build:
@@ -78,12 +78,10 @@ jobs:
         run: |
           cd cmake-build-frontend-sdl2
           cpack -G ZIP
-          cpack -G WIX
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: projectMSDL-Windows-Portable-x32
+          name: projectMSDL-Windows-Portable-x64
           path: |
             cmake-build-frontend-sdl2/*.zip
-            cmake-build-frontend-sdl2/*.msi
