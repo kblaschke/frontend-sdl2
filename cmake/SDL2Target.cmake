@@ -54,20 +54,30 @@ if(NOT TARGET SDL2::SDL2)
 endif()
 
 # Temporary fix to deal with wrong include dir set by SDL2's CMake configuration.
-get_target_property(_SDL2_INCLUDE_DIR SDL2::SDL2 INTERFACE_INCLUDE_DIRECTORIES)
-if(_SDL2_INCLUDE_DIR MATCHES "(.+)/SDL2\$" AND _SDL2_TARGET_TYPE STREQUAL STATIC_LIBRARY)
-    # Check if SDL2::SDL2 is aliased to SDL2::SDL2-static (will be the case for static-only builds)
-    get_target_property(_SDL2_ALIASED_TARGET SDL2::SDL2 ALIASED_TARGET)
-    if(_SDL2_ALIASED_TARGET)
-        set(_sdl2_target ${_SDL2_ALIASED_TARGET})
-    else()
-        set(_sdl2_target SDL2::SDL2)
-    endif()
+# Some SDL2 configs incorrectly report .../include/SDL2 instead of .../include.
+get_target_property(_SDL2_INCLUDE_DIRS SDL2::SDL2 INTERFACE_INCLUDE_DIRECTORIES)
 
-    message(STATUS "SDL2 include dir contains \"SDL2\" subdir (SDL bug #4004) - fixing to \"${CMAKE_MATCH_1}\".")
-    set_target_properties(${_sdl2_target} PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_MATCH_1}"
+if(_SDL2_INCLUDE_DIRS)
+    # The property can be a list, so handle each entry.
+    foreach(_dir IN LISTS _SDL2_INCLUDE_DIRS)
+        if(_dir MATCHES "(.+)/SDL2$")
+            set(_fixed_parent "${CMAKE_MATCH_1}")
+
+            # If SDL2::SDL2 is an alias, patch the real target.
+            get_target_property(_SDL2_ALIASED_TARGET SDL2::SDL2 ALIASED_TARGET)
+            if(_SDL2_ALIASED_TARGET)
+                set(_sdl2_target "${_SDL2_ALIASED_TARGET}")
+            else()
+                set(_sdl2_target SDL2::SDL2)
+            endif()
+
+            message(STATUS "SDL2 include dir contains \"SDL2\" subdir - fixing to \"${_fixed_parent}\".")
+            set_target_properties(${_sdl2_target} PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES "${_fixed_parent}"
             )
+            break()
+        endif()
+    endforeach()
 endif()
 
 if(SDL2_VERSION AND SDL2_VERSION VERSION_LESS "2.0.5")

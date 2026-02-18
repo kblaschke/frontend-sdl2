@@ -30,7 +30,7 @@ target_compile_definitions(projectMSDL_testcorelib
 # Linker set (add to this only when the linker asks)
 target_link_libraries(projectMSDL_testcorelib
     PRIVATE
-    SDL2::SDL2$<$<STREQUAL:${SDL2_LINKAGE},static>:-static>
+    SDL2::SDL2
 )
 
 # ======
