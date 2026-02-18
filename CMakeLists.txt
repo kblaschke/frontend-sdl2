@@ -6,15 +6,24 @@ set(CMAKE_POSITION_INDEPENDENT_CODE YES)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-project(projectMSDL
-        LANGUAGES C CXX
-        VERSION 2.0.0
-        )
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(ENABLE_FLAT_PACKAGE "Creates a \"flat\" install layout with the executable, configuration file(s) and preset/texture dirs directly in the install prefix." OFF)
 option(ENABLE_INSTALL_BDEPS "Installs all shared libraries projectMSDL requires to run. On some platforms, CMake 3.31 or higher is required for this to work!" OFF)
+
+# Added option display to cmake build to allow testing
+option(BUILD_TESTING "Build the frontend-sdl2 ctests" OFF)
+
+# Enable vcpkg manifest features according to build options (just like the projectm backend)
+if(BUILD_TESTING)
+    list(APPEND VCPKG_MANIFEST_FEATURES test)
+endif()
+
+# Moved below options to allow using options
+project(projectMSDL
+    LANGUAGES C CXX
+    VERSION 2.0.0
+)
 
 set(PROJECTMSDL_PROPERTIES_FILENAME "projectMSDL.properties")
 
@@ -95,6 +104,7 @@ if(NOT SDL2_LINKAGE STREQUAL "shared" AND NOT SDL2_LINKAGE STREQUAL "static")
             )
 endif()
 
+
 find_package(projectM4 REQUIRED COMPONENTS Playlist)
 find_package(SDL2 REQUIRED)
 find_package(Poco REQUIRED COMPONENTS JSON XML Util Foundation)
@@ -114,8 +124,10 @@ include(ImGui.cmake)
 
 add_subdirectory(src)
 
-if(ENABLE_TESTING)
-    add_subdirectory(test)
+# Adjusted testing build from existing code
+if(BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 include(install.cmake)
@@ -135,3 +147,9 @@ message(STATUS "The projectMSDL binary will look for the following hard-coded pa
 message(STATUS "    Configuration file:  ${DEFAULT_CONFIG_PATH}")
 message(STATUS "    Presets:             ${DEFAULT_PRESETS_PATH}")
 message(STATUS "    Textures:            ${DEFAULT_TEXTURES_PATH}")
+
+# Added testing message
+if (BUILD_TESTING)
+    message(STATUS "=============================================")
+    message(STATUS "    Tests:               ${BUILD_TESTING}")
+endif()
