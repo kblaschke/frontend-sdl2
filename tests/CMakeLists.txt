@@ -13,6 +13,12 @@ add_library(projectMSDL_testcorelib
     # ${PROJECT_SOURCE_DIR}/src/ProjectMWrapper.cpp
     # For now, we'll include a simple file just so this thing works. It can be removed if unneeded later.
     ${PROJECT_SOURCE_DIR}/src/FPSLimiter.cpp
+    ${PROJECT_SOURCE_DIR}/src/ProjectMSDLApplication.cpp
+    ${PROJECT_SOURCE_DIR}/src/RenderLoop.cpp
+    ${PROJECT_SOURCE_DIR}/src/ProjectMWrapper.cpp
+    ${PROJECT_SOURCE_DIR}/src/SDLRenderingWindow.cpp
+    ${PROJECT_SOURCE_DIR}/src/AudioCapture.cpp
+    ${PROJECT_SOURCE_DIR}/src/AudioCaptureImpl_SDL.cpp
 )
 
 # Headers from the production source tree
@@ -24,13 +30,20 @@ target_include_directories(projectMSDL_testcorelib
 # Compile definitions that are commonly referenced
 target_compile_definitions(projectMSDL_testcorelib
     PRIVATE
+    PROJECTMSDL_CONFIG_LOCATION="${DEFAULT_CONFIG_PATH}"
     PROJECTMSDL_VERSION="${PROJECT_VERSION}"
+    AUDIO_IMPL_HEADER="AudioCaptureImpl_SDL.h"
 )
 
 # Linker set (add to this only when the linker asks)
 target_link_libraries(projectMSDL_testcorelib
     PRIVATE
     SDL2::SDL2
+    Poco::Util
+    Poco::Foundation
+    ProjectMSDL-GUI
+    ProjectMSDL-Notifications
+    libprojectM::playlist
 )
 
 # ======
@@ -39,3 +52,4 @@ target_link_libraries(projectMSDL_testcorelib
 # (To be kept in this file after integration of above code into src/CMakeLists.txt)
 # ======
 add_subdirectory(renderer)
+add_subdirectory(audio)
