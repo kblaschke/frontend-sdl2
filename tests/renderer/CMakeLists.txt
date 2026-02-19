@@ -2,12 +2,12 @@
 find_package(GTest 1.10 REQUIRED NO_MODULE)
 
 # Creation of executable for this specific test
-add_executable(projectMsdl2-renderer-test
-    render-smoke-test.cpp
+add_executable(projectMSDL-renderer-test
+    RenderSmokeTest.cpp
 )
 
 # Call required libraries; testcore, gtest
-target_link_libraries(projectMsdl2-renderer-test
+target_link_libraries(projectMSDL-renderer-test
     PRIVATE
     projectMSDL_testcorelib
     GTest::gtest
@@ -15,4 +15,4 @@ target_link_libraries(projectMsdl2-renderer-test
 )
 
 # Add our test to the executable
-add_test(NAME projectMsdl2-renderer-test COMMAND projectMsdl2-renderer-test)
+add_test(NAME projectMSDL-renderer-test COMMAND projectMSDL-renderer-test)
