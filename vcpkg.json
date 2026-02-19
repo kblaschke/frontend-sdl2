@@ -9,7 +9,14 @@
         "util"
       ]
     },
-    "projectm",
     "freetype"
-  ]
+  ],
+  "features": {
+    "test": {
+      "description": "Build unit tests",
+      "dependencies": [
+        "gtest"
+      ]
+    }
+  }
 }
