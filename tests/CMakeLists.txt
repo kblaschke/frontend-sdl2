@@ -18,8 +18,24 @@ add_library(projectMSDL_testcorelib
     ${PROJECT_SOURCE_DIR}/src/ProjectMWrapper.cpp
     ${PROJECT_SOURCE_DIR}/src/SDLRenderingWindow.cpp
     ${PROJECT_SOURCE_DIR}/src/AudioCapture.cpp
-    ${PROJECT_SOURCE_DIR}/src/AudioCaptureImpl_SDL.cpp
 )
+
+if (WIN32)
+    target_sources(projectMSDL_testcorelib PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/AudioCaptureImpl_WASAPI.cpp
+    )
+    target_compile_definitions(projectMSDL_testcorelib PRIVATE
+        AUDIO_IMPL_HEADER="AudioCaptureImpl_WASAPI.h"
+        USE_GLEW
+    )
+else()
+    target_sources(projectMSDL_testcorelib PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/AudioCaptureImpl_SDL.cpp
+    )
+    target_compile_definitions(projectMSDL_testcorelib PRIVATE
+        AUDIO_IMPL_HEADER="AudioCaptureImpl_SDL.h"
+    )
+endif()
 
 # Headers from the production source tree
 target_include_directories(projectMSDL_testcorelib
@@ -32,7 +48,6 @@ target_compile_definitions(projectMSDL_testcorelib
     PRIVATE
     PROJECTMSDL_CONFIG_LOCATION="${DEFAULT_CONFIG_PATH}"
     PROJECTMSDL_VERSION="${PROJECT_VERSION}"
-    AUDIO_IMPL_HEADER="AudioCaptureImpl_SDL.h"
 )
 
 # Linker set (add to this only when the linker asks)
