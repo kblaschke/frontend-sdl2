@@ -97,10 +97,20 @@ jobs:
       USERNAME: projectM-visualizer
       VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
       FEED_URL: https://nuget.pkg.github.com/projectM-visualizer/index.json
-      VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/projectM-visualizer/index.json,readwrite"
-
 
     steps:
+      - name: Configure vcpkg binary source mode
+        shell: pwsh
+        run: |
+          if ("${{ github.repository }}" -eq "projectM-visualizer/frontend-sdl-cpp") {
+            Write-Host "Using readwrite binary cache (upstream repo)"
+            "VCPKG_BINARY_SOURCES=clear;nuget,${{ env.FEED_URL }},readwrite" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+          else {
+            Write-Host "Using read-only binary cache (fork or PR)"
+            "VCPKG_BINARY_SOURCES=clear;nuget,${{ env.FEED_URL }},read" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
       - name: Checkout vcpkg
         uses: actions/checkout@v4
         with:
@@ -108,21 +118,61 @@ jobs:
           path: vcpkg
           submodules: recursive
 
+      # Capture the exact vcpkg repository commit being used.
+      # This ensures our cache key changes automatically if vcpkg itself is updated.
+      - name: Get vcpkg commit
+        id: vcpkg_rev
+        shell: pwsh
+        run: |
+          $rev = (git -C "${{ github.workspace }}/vcpkg" rev-parse HEAD).Trim()
+          "rev=$rev" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      # Needed before cache so hashFiles('**/vcpkg.json', ...) actually sees these files.
+      - name: Checkout projectMSDL Sources
+        uses: actions/checkout@v4
+        with:
+          path: frontend-sdl2
+          submodules: recursive
+
+      # Cache downloaded sources and compiled packages so vcpkg does not rebuild all dependencies on every CI run.
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg/downloads
+            ${{ github.workspace }}/vcpkg/buildtrees
+            ${{ github.workspace }}/vcpkg/packages
+          # Cache key includes OS, vcpkg commit, and dependency manifest hash.
+          # Any change to vcpkg version or dependencies automatically invalidates cache.
+          key: vcpkg-${{ runner.os }}-${{ steps.vcpkg_rev.outputs.rev }}-${{ hashFiles('frontend-sdl2/vcpkg.json', 'frontend-sdl2/vcpkg-configuration.json') }}
+          # Fallback keys allow partial reuse if only dependency hash changed.
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ steps.vcpkg_rev.outputs.rev }}-
+            vcpkg-${{ runner.os }}-
+
       - name: Bootstrap vcpkg
         shell: pwsh
         run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
 
       - name: Add NuGet sources
+        if: github.repository == 'projectM-visualizer/frontend-sdl-cpp'
+        env:
+          VCPKG_PACKAGES_TOKEN: ${{ secrets.VCPKG_PACKAGES_TOKEN }}
         shell: pwsh
         run: |
+          if (-not $env:VCPKG_PACKAGES_TOKEN) {
+            Write-Host "VCPKG_PACKAGES_TOKEN not set; skipping NuGet auth."
+            exit 0
+          }
+
           $nuget = (& "${{ env.VCPKG_EXE }}" fetch nuget | Select-Object -Last 1).Trim()
           & $nuget sources add `
             -Source "${{ env.FEED_URL }}" `
             -StorePasswordInClearText `
             -Name GitHubPackages `
             -UserName "${{ env.USERNAME }}" `
-            -Password "${{ secrets.VCPKG_PACKAGES_TOKEN }}"
-          & $nuget setapikey "${{ secrets.VCPKG_PACKAGES_TOKEN }}" `
+            -Password "$env:VCPKG_PACKAGES_TOKEN"
+          & $nuget setapikey "$env:VCPKG_PACKAGES_TOKEN" `
             -Source "${{ env.FEED_URL }}"
 
       - name: Checkout libprojectM Sources
@@ -138,12 +188,6 @@ jobs:
           cmake -G "Visual Studio 17 2022" -A "X64" -S "${{ github.workspace }}/projectm" -B "${{ github.workspace }}/cmake-build-libprojectm" -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install-libprojectm" -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>" -DCMAKE_VERBOSE_MAKEFILE=YES -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=NO
           cmake --build "${{ github.workspace }}/cmake-build-libprojectm" --config Release --parallel
           cmake --install "${{ github.workspace }}/cmake-build-libprojectm" --config Release
-
-      - name: Checkout projectMSDL Sources
-        uses: actions/checkout@v4
-        with:
-          path: frontend-sdl2
-          submodules: recursive
 
       - name: Build projectMSDL
         run: |
