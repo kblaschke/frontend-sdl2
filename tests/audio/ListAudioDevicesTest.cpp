@@ -23,8 +23,8 @@ TEST(ListAudioDevicesTest, SetsAudioListDevicesOverrideToTrue)
     EXPECT_TRUE(cfg->getBool("audio.listDevices", false));
 
     // Get config again, to test using a fresh config object
-    auto cfg = app.CommandLineConfiguration();
-    ASSERT_TRUE(cfg); // check configuration object exists
+    auto cfg2 = app.CommandLineConfiguration();
+    ASSERT_TRUE(cfg2); // check configuration object exists
 
-    EXPECT_TRUE(cfg->getBool("audio.listDevices", false));
+    EXPECT_TRUE(cfg2->getBool("audio.listDevices", false));
 }
