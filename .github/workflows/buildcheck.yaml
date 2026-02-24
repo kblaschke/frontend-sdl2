@@ -122,6 +122,14 @@ jobs:
           path: frontend-sdl2
           submodules: recursive
 
+      - name: Prepare vcpkg binary cache dir (forks)
+        if: github.repository != 'projectM-visualizer/frontend-sdl-cpp'
+        shell: pwsh
+        run: |
+          $cacheDir = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
+          New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
+          Write-Host "Cache dir: $cacheDir"
+
       # Restore fork cache (file-based binary cache persisted by actions/cache)
       - name: Cache vcpkg binary cache (forks)
         if: github.repository != 'projectM-visualizer/frontend-sdl-cpp'
@@ -158,7 +166,6 @@ jobs:
         run: |
           Write-Host "Using local file-based binary cache (readwrite) for fork/PR"
           $cacheDir = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
-          New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
           "VCPKG_DEFAULT_BINARY_CACHE=$cacheDir" | Out-File -FilePath $env:GITHUB_ENV -Append
           "VCPKG_BINARY_SOURCES=clear;files,$cacheDir,readwrite" | Out-File -FilePath $env:GITHUB_ENV -Append
 
