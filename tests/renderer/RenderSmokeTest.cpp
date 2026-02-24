@@ -3,10 +3,28 @@
 #include "SDLRenderingWindow.h"
 #include "ProjectMWrapper.h"
 
+#if defined(_WIN32)
+    #include <GL/glew.h>
+#endif
+
 #include <SDL2/SDL_opengl.h>
 #include <vector>
 #include <cstdlib>
 
+struct RendererSmokeCleanup {
+    ProjectMWrapper* renderer = nullptr;
+    SDLRenderingWindow* window = nullptr;
+
+    ~RendererSmokeCleanup() {
+        if (renderer) renderer->uninitialize();
+        if (window) window->uninitialize();
+    }
+};
+
+auto CheckGLError = [] (const char* where) {
+    GLenum err = glGetError();
+    ASSERT_EQ(err, GL_NO_ERROR) << "OpenGL error at " << where << ": 0x" << std::hex << err;
+};
 
 // Helper function:
 // Count how many pixels are NOT black
@@ -44,13 +62,20 @@ TEST(RenderSmokeTest, AppRendersSomething) {
     
     // Create SDL window + OpenGL context
     auto& window = app.getSubsystem<SDLRenderingWindow>();
-    ASSERT_NO_THROW(window.initialize(app));
 
     // Give SDL a moment / pump events
     SDL_PumpEvents();
 
     // Create the projectM renderer
     auto& renderer = app.getSubsystem<ProjectMWrapper>();
+
+    // Create a cleaner
+    RendererSmokeCleanup cleanup;
+    cleanup.window = &window;
+    cleanup.renderer = &renderer;
+
+    // Make sure these actually initialized correctly
+    ASSERT_NO_THROW(window.initialize(app));
     ASSERT_NO_THROW(renderer.initialize(app));
 
     // Get the size of the drawable OpenGL area
@@ -61,22 +86,39 @@ TEST(RenderSmokeTest, AppRendersSomething) {
     ASSERT_GT(width, 0);
     ASSERT_GT(height, 0);
 
+    // Make sure our OpenGL window is clear first
+    glViewport(0, 0, width, height);
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glFinish();
+    CheckGLError("ClearColor");
+
     // Render a few frames
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 20; ++i) {
         renderer.RenderFrame();
         glFinish();
+        CheckGLError("RenderFrame");
     }
 
     // Prepare buffer and read pixels
     const size_t bufSize = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
     std::vector<unsigned char> pixels(bufSize);
-
     glPixelStorei(GL_PACK_ALIGNMENT, 1); // safe alignment for glReadPixels
 
-    // Try reading back from the back buffer first
-    glReadBuffer(GL_BACK);
+    // Ensure we're bound to the default framebuffer because the renderer may have left an FBO bound
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    CheckGLError("glBindFramebuffer(0)");
+
+    // Pick a read buffer that actually exists (GL_BACK if double-buffered; otherwise GL_FRONT)
+    int doubleBuffered = 0;
+    SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &doubleBuffered);
+    glReadBuffer(doubleBuffered ? GL_BACK : GL_FRONT);
+    CheckGLError("glReadBuffer");
+
+    // Read pixels from the chosen buffer
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
     glFinish();
+    CheckGLError("glReadPixels");
 
     // Count non black pixels in back buffer
     size_t nonBlack = CountNonBlackPixels(pixels);
@@ -86,8 +128,4 @@ TEST(RenderSmokeTest, AppRendersSomething) {
     if (threshold < 100) threshold = 100;
 
     EXPECT_GT(nonBlack, threshold);
-
-    // Clean up
-    renderer.uninitialize();
-    window.uninitialize();
 }
