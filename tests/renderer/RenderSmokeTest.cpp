@@ -7,6 +7,11 @@
     #include <GL/glew.h>
 #endif
 
+#ifdef __APPLE__
+  #define GL_SILENCE_DEPRECATION
+  #include <OpenGL/gl3.h>
+#endif
+
 #include <SDL2/SDL_opengl.h>
 #include <vector>
 #include <cstdlib>
