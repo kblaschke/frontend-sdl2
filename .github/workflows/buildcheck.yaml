@@ -97,8 +97,6 @@ jobs:
       USERNAME: projectM-visualizer
       VCPKG_EXE: ${{ github.workspace }}/vcpkg/vcpkg
       FEED_URL: https://nuget.pkg.github.com/projectM-visualizer/index.json
-      VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/projectM-visualizer/index.json,readwrite"
-
 
     steps:
       - name: Checkout vcpkg
@@ -108,22 +106,94 @@ jobs:
           path: vcpkg
           submodules: recursive
 
-      - name: Bootstrap vcpkg
-        shell: pwsh
-        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
-
-      - name: Add NuGet sources
+      # Capture the exact vcpkg repository commit being used.
+      # This ensures our cache key changes automatically if vcpkg itself is updated.
+      - name: Get vcpkg commit
+        id: vcpkg_rev
         shell: pwsh
         run: |
+          $rev = (git -C "${{ github.workspace }}/vcpkg" rev-parse HEAD).Trim()
+          "rev=$rev" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      # Checkout this repo before hashFiles() / manifest is referenced
+      - name: Checkout projectMSDL Sources
+        uses: actions/checkout@v4
+        with:
+          path: frontend-sdl2
+          submodules: recursive
+
+      - name: Prepare vcpkg binary cache dir (forks)
+        if: github.repository != 'projectM-visualizer/frontend-sdl-cpp'
+        shell: pwsh
+        run: |
+          $cacheDir = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
+          New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
+          Write-Host "Cache dir: $cacheDir"
+
+      # Restore fork cache (file-based binary cache persisted by actions/cache)
+      - name: Cache vcpkg binary cache (forks)
+        if: github.repository != 'projectM-visualizer/frontend-sdl-cpp'
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}\vcpkg-binary-cache
+          key: vcpkg-bincache-${{ runner.os }}-${{ steps.vcpkg_rev.outputs.rev }}-${{ hashFiles('frontend-sdl2/vcpkg.json', 'frontend-sdl2/vcpkg-configuration.json') }}
+          restore-keys: |
+            vcpkg-bincache-${{ runner.os }}-${{ steps.vcpkg_rev.outputs.rev }}-
+            vcpkg-bincache-${{ runner.os }}-
+
+      - name: Show if binary cache has contents (forks)
+        if: github.repository != 'projectM-visualizer/frontend-sdl-cpp'
+        shell: pwsh
+        run: |
+          $cacheDir = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
+          if (Test-Path $cacheDir) {
+            Get-ChildItem -Recurse $cacheDir | Select-Object -First 30 FullName
+          } else {
+            Write-Host "Binary cache directory does not exist."
+          }
+
+      # Configure vcpkg binary cache behavior
+      - name: Configure vcpkg binary cache (upstream)
+        if: github.repository == 'projectM-visualizer/frontend-sdl-cpp'
+        shell: pwsh
+        run: |
+          Write-Host "Using NuGet binary cache (readwrite) for upstream repo"
+          "VCPKG_BINARY_SOURCES=clear;nuget,${{ env.FEED_URL }},readwrite" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Configure vcpkg binary cache (forks)
+        if: github.repository != 'projectM-visualizer/frontend-sdl-cpp'
+        shell: pwsh
+        run: |
+          Write-Host "Using local file-based binary cache (readwrite) for fork/PR"
+          $cacheDir = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
+          "VCPKG_DEFAULT_BINARY_CACHE=$cacheDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "VCPKG_BINARY_SOURCES=clear;files,$cacheDir,readwrite" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      # Upstream-only: authenticate to GitHub Packages NuGet feed
+      - name: Add NuGet sources
+        if: github.repository == 'projectM-visualizer/frontend-sdl-cpp'
+        env:
+          VCPKG_PACKAGES_TOKEN: ${{ secrets.VCPKG_PACKAGES_TOKEN }}
+        shell: pwsh
+        run: |
+          if (-not $env:VCPKG_PACKAGES_TOKEN) {
+            Write-Host "VCPKG_PACKAGES_TOKEN not set; skipping NuGet auth."
+            exit 0
+          }
+
           $nuget = (& "${{ env.VCPKG_EXE }}" fetch nuget | Select-Object -Last 1).Trim()
           & $nuget sources add `
             -Source "${{ env.FEED_URL }}" `
             -StorePasswordInClearText `
             -Name GitHubPackages `
             -UserName "${{ env.USERNAME }}" `
-            -Password "${{ secrets.VCPKG_PACKAGES_TOKEN }}"
-          & $nuget setapikey "${{ secrets.VCPKG_PACKAGES_TOKEN }}" `
+            -Password "$env:VCPKG_PACKAGES_TOKEN"
+          & $nuget setapikey "$env:VCPKG_PACKAGES_TOKEN" `
             -Source "${{ env.FEED_URL }}"
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat
 
       - name: Checkout libprojectM Sources
         uses: actions/checkout@v4
@@ -138,12 +208,6 @@ jobs:
           cmake -G "Visual Studio 17 2022" -A "X64" -S "${{ github.workspace }}/projectm" -B "${{ github.workspace }}/cmake-build-libprojectm" -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install-libprojectm" -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>" -DCMAKE_VERBOSE_MAKEFILE=YES -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=NO
           cmake --build "${{ github.workspace }}/cmake-build-libprojectm" --config Release --parallel
           cmake --install "${{ github.workspace }}/cmake-build-libprojectm" --config Release
-
-      - name: Checkout projectMSDL Sources
-        uses: actions/checkout@v4
-        with:
-          path: frontend-sdl2
-          submodules: recursive
 
       - name: Build projectMSDL
         run: |
