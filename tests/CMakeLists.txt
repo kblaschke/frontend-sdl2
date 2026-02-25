@@ -68,3 +68,4 @@ target_link_libraries(projectMSDL_testcorelib
 # ======
 add_subdirectory(renderer)
 add_subdirectory(audio)
+add_subdirectory(cli)
