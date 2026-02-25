@@ -44,25 +44,21 @@ struct CliResult
 
 // Helper: launches projectMSDL with given args.
 // Throws std::runtime_error on failure.
-static CliResult RunCli(const std::vector<std::string>& args,
-                        int timeoutSeconds = 3)
+static CliResult RunCli(const std::vector<std::string>& args, int timeoutSeconds = 3)
 {
     const std::string binaryPath = PROJECTMSDL_BINARY_PATH;
 
     // Ensure binary exists and is executable.
     Poco::File binFile(binaryPath);
-    if (!binFile.exists())
-        throw std::runtime_error("Binary not found: " + binaryPath);
-    if (!binFile.canExecute())
-        throw std::runtime_error("Binary not executable: " + binaryPath);
+    if (!binFile.exists()) throw std::runtime_error("Binary not found: " + binaryPath);
+    if (!binFile.canExecute()) throw std::runtime_error("Binary not executable: " + binaryPath);
 
     // Capture stdout/stderr.
     Poco::Pipe outPipe;
     Poco::Pipe errPipe;
 
     // Launch the process and construct the ProcessHandle from the return value.
-    Poco::ProcessHandle handle =
-        Poco::Process::launch(binaryPath, args, nullptr, &outPipe, &errPipe);
+    Poco::ProcessHandle handle = Poco::Process::launch(binaryPath, args, nullptr, &outPipe, &errPipe);
 
     // --- Timeout guard (detect accidental RenderLoop entry) ---
     const Poco::Timespan timeout(timeoutSeconds, 0);
@@ -81,9 +77,7 @@ static CliResult RunCli(const std::vector<std::string>& args,
         if (start.elapsed() > timeout.totalMicroseconds())
         {
             try { Poco::Process::kill(handle); } catch (...) {}
-            throw std::runtime_error(
-                "CLI process did not exit before timeout "
-                "(possible RenderLoop entry).");
+            throw std::runtime_error("CLI process did not exit before timeout (possible RenderLoop entry).");
         }
 
         Poco::Thread::sleep(10);
@@ -96,15 +90,13 @@ static CliResult RunCli(const std::vector<std::string>& args,
     try { stdoutText = ReadAll(outPipe); }
     catch (const Poco::Exception& ex)
     {
-        throw std::runtime_error(
-            std::string("Error reading stdout: ") + ex.displayText());
+        throw std::runtime_error(std::string("Error reading stdout: ") + ex.displayText());
     }
 
     try { stderrText = ReadAll(errPipe); }
     catch (const Poco::Exception& ex)
     {
-        throw std::runtime_error(
-            std::string("Error reading stderr: ") + ex.displayText());
+        throw std::runtime_error(std::string("Error reading stderr: ") + ex.displayText());
     }
 
     return { exitCode, stdoutText + (stderrText.empty() ? "" : "\n" + stderrText) };
@@ -116,7 +108,11 @@ TEST(CliHelpOption, HelpPrintsAndExitsWithoutRunning)
 
     try
     {
+#ifdef _WIN32
+        result = RunCli({ "/help" });
+#else
         result = RunCli({ "--help" });
+#endif
     }
     catch (const std::exception& ex)
     {
@@ -125,18 +121,9 @@ TEST(CliHelpOption, HelpPrintsAndExitsWithoutRunning)
     }
 
     // Must exit successfully.
-    ASSERT_EQ(result.exitCode, 0)
-        << "Non-zero exit (" << result.exitCode << "). Output:\n"
-        << result.output;
+    ASSERT_EQ(result.exitCode, 0) << "Non-zero exit (" << result.exitCode << "). Output:\n" << result.output;
 
     // Must print recognizable help/usage text.
-    EXPECT_NE(result.output.find("projectM SDL Standalone Visualizer"),
-              std::string::npos)
-        << "Expected help header not found.\nOutput:\n"
-        << result.output;
-
-    EXPECT_NE(result.output.find("[options]"),
-              std::string::npos)
-        << "Expected usage/options text not found.\nOutput:\n"
-        << result.output;
+    EXPECT_NE(result.output.find("projectM SDL Standalone Visualizer"), std::string::npos) << "Expected help header not found.\nOutput:\n" << result.output;
+    EXPECT_NE(result.output.find("[options]"), std::string::npos) << "Expected usage/options text not found.\nOutput:\n" << result.output;
 }
