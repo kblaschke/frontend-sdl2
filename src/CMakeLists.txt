@@ -5,6 +5,8 @@ set(PROJECTM_CONFIGURATION_FILE "${CMAKE_CURRENT_BINARY_DIR}/projectMSDL.propert
 set(PROJECTM_CONFIGURATION_FILE "${PROJECTM_CONFIGURATION_FILE}" PARENT_SCOPE)
 configure_file(resources/projectMSDL.properties.in "${PROJECTM_CONFIGURATION_FILE}" @ONLY)
 
+find_package(OpenGL REQUIRED)
+
 add_executable(projectMSDL WIN32 MACOSX_BUNDLE
         AudioCapture.cpp
         AudioCapture.h
@@ -81,6 +83,14 @@ target_link_libraries(projectMSDL
         SDL2::SDL2$<$<STREQUAL:${SDL2_LINKAGE},static>:-static>
         SDL2::SDL2main
         )
+
+if (TARGET OpenGL::GL)
+    target_link_libraries(projectMSDL PRIVATE OpenGL::GL)
+elseif (TARGET OpenGL::OpenGL)
+    target_link_libraries(projectMSDL PRIVATE OpenGL::OpenGL)
+else()
+    message(FATAL_ERROR "No OpenGL CMake target found.")
+endif()
 
 if (MSVC)
     set_target_properties(projectMSDL
