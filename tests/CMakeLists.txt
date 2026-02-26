@@ -129,3 +129,4 @@ target_link_libraries(projectMSDL_testcorelib_norenderloop
 add_subdirectory(renderer)
 add_subdirectory(audio)
 add_subdirectory(cli)
+add_subdirectory(ui)
